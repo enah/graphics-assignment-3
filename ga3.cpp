@@ -133,21 +133,6 @@ void myReshape(int w, int h) {
 
 }
 
-//****************************************************
-// A routine to set a pixel by drawing a GL point.  This is not a
-// general purpose routine as it assumes a lot of stuff specific to
-// this example.
-//****************************************************
-
-void setPixel(int x, int y, GLfloat r, GLfloat g, GLfloat b) {
-  glColor3f(r, g, b);
-  glVertex2f(x + 0.5, y + 0.5);   // The 0.5 is to target pixel centers 
-  // Note: Need to check for gap
-  // bug on inst machines.
-}
-
-
-
 void uniformTesselation() {
     //gl stuff (color?) here?
     for (int i = 0; i < numPatches; i++) {
