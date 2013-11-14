@@ -39,13 +39,20 @@ class Viewport {
 
 class Point {
 public:
-    Point(): x(0), y(0), z(0) {}
-    Point(float X, float Y, float Z): x(X), y(Y), z(Z) {}
+    Point(): x(0), y(0), z(0), u(0), v(0) {}
+    Point(float X, float Y, float Z): x(X), y(Y), z(Z), u(0), v(0) {}
+    Point(float X, float Y, float Z): x(X), y(Y), z(Z), u(U), v(V) {}
     Point operator+(Point p) {
-	return Point(x+p.x, y+p.y, z+p.z);
+	return Point(x+p.x, y+p.y, z+p.z, u+p.u, v+p.v);
     }
     Point operator*(float m) {
-	return Point(x*m, y*m, z*m);
+	return Point(x*m, y*m, z*m, u*m, v*m);
+    }
+    float distance(Point p) {
+	return sqrt((x-p.x)**2 + (y-p.y)**2 + (z-p.z)**2);
+    }
+    Point midpoint(Point p) {
+	return (this + p) * 0.5;
     }
     void putVertex() {
 	glVertex3f(x, y, -z); // negate z?
@@ -59,7 +66,7 @@ public:
 	glEnd();
 	return;
     }
-    float x, y, z;
+    float x, y, z, u, v;
 };
 
 class Curve {
