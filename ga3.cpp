@@ -24,7 +24,7 @@
 
 #include <IL/il.h>
 
-#define TOLERANCE 0.001
+#define ANGLE 15.0
 
 using namespace std;
 
@@ -119,6 +119,7 @@ Patch** patches;
 void initScene() {
 
   // Nothing to do here for this simple example.
+    glLoadIdentity();
 
 }
 
@@ -140,15 +141,18 @@ void myReshape(int w, int h) {
 void uniformTesselation() {
     int numSteps = (int)(1.0 / limit) + 1;
     for (int i = 0; i < numPatches; i++) {
+	glColor3f(limit*i, 1.0 - limit*i, 0.0f);
 	//printf("%d", numSteps);
-	Point* curr = new Point[numSteps];
-	Point* prev = new Point[numSteps];
+	Point* curr = new Point[numSteps + 1];
+	Point* prev = new Point[numSteps + 1];
 	Point* temp;
 	curr[0] = patches[i]->pts[0];
 	for (int u = 1; u < numSteps; u++) {
 	    prev[u] = patches[i]->interpolate(u*limit,0.0);
-	    prev[u].drawFrom(curr[u-1]);
+	    prev[u].drawFrom(prev[u-1]);
 	}
+	prev[numSteps] = patches[i]->interpolate(1.0, 0.0);
+	prev[numSteps].drawFrom(prev[numSteps-1]);
 	for (int v = 1; v < numSteps; v++) {
 	    curr[0] = patches[i]->interpolate(0.0, v*limit);
 	    curr[0].drawFrom(prev[0]);
@@ -157,9 +161,19 @@ void uniformTesselation() {
 		curr[u].drawFrom(curr[u-1]);
 		curr[u].drawFrom(prev[u]);
 	    }
+	    curr[numSteps] = patches[i]->interpolate(1.0, v*limit);
+	    curr[numSteps].drawFrom(curr[numSteps-1]);
+	    curr[numSteps].drawFrom(prev[numSteps]);
 	    temp = prev;
 	    prev = curr;
 	    curr = temp;
+	}
+	curr[0] = patches[i]->interpolate(0.0, 1.0);
+	curr[0].drawFrom(prev[0]);
+	for (int u = 1; u < numSteps; u++) {
+	    curr[u] = patches[i]->interpolate(u*limit, 1.0);
+	    curr[u].drawFrom(curr[u-1]);
+	    curr[u].drawFrom(prev[u]);
 	}
     }
 }
@@ -172,11 +186,11 @@ void myDisplay() {
     glClear(GL_COLOR_BUFFER_BIT);				// clear the color buffer
 
     glMatrixMode(GL_MODELVIEW);			        // indicate we are specifying camera transformations
-    glLoadIdentity();				        // make sure transformation is "zero'd"
+    //glLoadIdentity();				        // make sure transformation is "zero'd"
 
 
     // Start drawing
-    glColor3f(1.0f, 0.5f, 0.0f);
+    //glColor3f(1.0f, 0.5f, 0.0f);
 
   // Glbegin(Gl_LINE_STRIP);
   // glVertex3f(0.0f, 0.0f, 0.0f);
@@ -192,8 +206,51 @@ void myDisplay() {
     //printf("hello world");
 }
 
+void myDirectionalKeys(int key, int mouseX, int mouseY) {
+    if (glutGetModifiers() == GLUT_ACTIVE_SHIFT) {
+	switch (key) {
+	case GLUT_KEY_RIGHT:
+	    glTranslatef(1.0f, 0.0f, 1.0f);
+	    break;
+	case GLUT_KEY_LEFT:
+	    glTranslatef(-1.0f, 0.0f, 1.0f);
+	    break;
+	case GLUT_KEY_UP:
+	    glTranslatef(0.0f, 1.0f, 0.0f);
+	    break;
+	case GLUT_KEY_DOWN:
+	    glTranslatef(0.0f, -1.0f, 0.0f);
+	    break;
+	    // translate object with shift+arrow keys
+	default:
+	    break;
+	}
+    } else {
+	switch (key) {
+	case GLUT_KEY_RIGHT:
+	    glRotatef(ANGLE, 0.0f, 0.0f, 1.0f);
+	    break;
+	case GLUT_KEY_LEFT:
+	    glRotatef(-ANGLE, 0.0f, 0.0f, 1.0f);
+	    break;
+	case GLUT_KEY_UP:
+	    glRotatef(ANGLE, 1.0f, 0.0f, 0.0f);
+	    break;
+	case GLUT_KEY_DOWN:
+	    glRotatef(-ANGLE, 1.0f, 0.0f, 0.0f);
+	    break;
+	    // translate object with shift+arrow keys
+	default:
+	    break;
+	}
+    }
+}
+
 void myKeyboard(unsigned char key, int mouseX, int mouseY) {
     switch (key) {
+    case ' ': // make sure this is working
+	exit(0);
+	break;
     case 's':
 	// toggle shading
 	break;
@@ -203,7 +260,6 @@ void myKeyboard(unsigned char key, int mouseX, int mouseY) {
     case 'h': // optional
 	// toggle between filled and hidden-line mode
 	break;
-    // rotate object with arrow keys
     // translate object with shift+arrow keys
     default:
 	break;
@@ -297,7 +353,7 @@ int main(int argc, char *argv[]) {
     }
 
     loadPatches(file);
-    printPatches();
+    //printPatches();
 
   //The size and position of the window
   glutInitWindowSize(viewport.w, viewport.h);
@@ -309,7 +365,8 @@ int main(int argc, char *argv[]) {
   glutDisplayFunc(myDisplay);				// function to run when its time to draw something
   glutReshapeFunc(myReshape);				// function to run when the window gets resized
   glutKeyboardFunc(myKeyboard);
-  //glutIdleFunc(myFrameMove);
+  glutSpecialFunc(myDirectionalKeys);
+  glutIdleFunc(myFrameMove);
 
   glutMainLoop();							// infinite loop that will keep drawing and resizing
   // and whatever else
