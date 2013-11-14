@@ -197,6 +197,17 @@ void myKeyboard(unsigned char key, int mouseX, int mouseY) {
     }
 }
 
+void printPatches() {
+    for (int i = 0; i < numPatches; i++) {
+	for (int j = 0; j < 4; j++) {
+	    printf("%.2f %.2f %.2f  ", patches[i]->pts[j].x, patches[i]->pts[j].y, patches[i]->pts[j].z);
+	    printf("%.2f %.2f %.2f  ", patches[i]->pts[j+1].x, patches[i]->pts[j+1].y, patches[i]->pts[j+1].z);
+	    printf("%.2f %.2f %.2f  ", patches[i]->pts[j+2].x, patches[i]->pts[j+2].y, patches[i]->pts[j+2].z);
+	    printf("%.2f %.2f %.2f\n", patches[i]->pts[j+3].x, patches[i]->pts[j+3].y, patches[i]->pts[j+3].z);
+	}
+    }
+}
+
 void loadPatches(string file) {
     ifstream inpfile(file.c_str());
     if (!inpfile.is_open()) {
@@ -252,6 +263,9 @@ int main(int argc, char *argv[]) {
     if (argc > 3 && !strncmp(argv[3], "-a", 2)) {
         adaptive = true;
     }
+
+    loadPatches(file);
+    printPatches();
 
   //The size and position of the window
   glutInitWindowSize(viewport.w, viewport.h);
