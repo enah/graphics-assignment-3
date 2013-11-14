@@ -46,7 +46,7 @@ public:
 	return Point(x*m, y*m, z*m);
     }
     void putVertex() {
-	glVertex3f(x, y, z); // negate z?
+	glVertex3f(x, y, -z); // negate z?
 	return;
     }
     void drawFrom(Point p) {
@@ -170,13 +170,19 @@ void myDisplay() {
 
 
     // Start drawing
-    glColor3f(1.0f, 0.0f, 0.0f);
+    glColor3f(1.0f, 0.5f, 0.0f);
+
+  glBegin(GL_LINE_STRIP);
+  glVertex3f(0.0f, 0.0f, 0.0f);
+  glVertex3f(0.0f, 0.5f, 0.0f);
+  glVertex3f(0.5f, 0.0f, 0.0f);
+  glEnd();    
     
     uniformTesselation();
 
     glFlush();
     glutSwapBuffers();					// swap buffers (we earlier set double buffer)
-
+    printf("hello world");
 }
 
 void myKeyboard(unsigned char key, int mouseX, int mouseY) {
@@ -208,6 +214,10 @@ void printPatches() {
     }
 }
 
+void print12(float a, float b, float c, float d, float e, float f, float g, float h, float i, float j, float k, float l) {
+    printf("%.2f %.2f %.2f  %.2f %.2f %.2f  %.2f %.2f %.2f  %.2f %.2f %.2f\n", a, b, c, d, e, f, g, h, i, j, k, l);
+}
+
 void loadPatches(string file) {
     ifstream inpfile(file.c_str());
     if (!inpfile.is_open()) {
@@ -215,32 +225,47 @@ void loadPatches(string file) {
     } else {
 	inpfile >> numPatches;
 	patches = new Patch*[numPatches];
-	float a, b, c, d, e, f, g, h, i, j, k, l;
+	float a, b, c, d, e, f, g, h, m, j, k, l;
 	for (int i = 0; i < numPatches; i++) {
-	    inpfile >> a >> b >> c >> d >> e >> f >> g >> h >> i >> j >> k >> l;
+	    inpfile >> a >> b >> c >> d >> e >> f >> g >> h >> m >> j >> k >> l;
+	    //print12(a, b, c, d, e, f, g, h, m, j, k, l);
 	    patches[i] = new Patch();
 	    patches[i]->pts[0] = *(new Point(a, b, c)); // I feel like you should do this another way
 	    patches[i]->pts[1] = *(new Point(d, e, f));
-	    patches[i]->pts[2] = *(new Point(g, h, i));
+	    patches[i]->pts[2] = *(new Point(g, h, m));
 	    patches[i]->pts[3] = *(new Point(j, k, l));
-	    inpfile >> a >> b >> c >> d >> e >> f >> g >> h >> i >> j >> k >> l;
+	    inpfile >> a >> b >> c >> d >> e >> f >> g >> h >> m >> j >> k >> l;
+	    //print12(a, b, c, d, e, f, g, h, m, j, k, l);
 	    patches[i]->pts[4] = *(new Point(a, b, c));
 	    patches[i]->pts[5] = *(new Point(d, e, f));
-	    patches[i]->pts[6] = *(new Point(g, h, i));
+	    patches[i]->pts[6] = *(new Point(g, h, m));
 	    patches[i]->pts[7] = *(new Point(j, k, l));
-	    inpfile >> a >> b >> c >> d >> e >> f >> g >> h >> i >> j >> k >> l;
+	    inpfile >> a >> b >> c >> d >> e >> f >> g >> h >> m >> j >> k >> l;
+	    //print12(a, b, c, d, e, f, g, h, m, j, k, l);
 	    patches[i]->pts[8] = *(new Point(a, b, c));
 	    patches[i]->pts[9] = *(new Point(d, e, f));
-	    patches[i]->pts[10] = *(new Point(g, h, i));
+	    patches[i]->pts[10] = *(new Point(g, h, m));
 	    patches[i]->pts[11] = *(new Point(j, k, l));
-	    inpfile >> a >> b >> c >> d >> e >> f >> g >> h >> i >> j >> k >> l;
+	    inpfile >> a >> b >> c >> d >> e >> f >> g >> h >> m >> j >> k >> l;
+	    //print12(a, b, c, d, e, f, g, h, m, j, k, l);
 	    patches[i]->pts[12] = *(new Point(a, b, c));
 	    patches[i]->pts[13] = *(new Point(d, e, f));
-	    patches[i]->pts[14] = *(new Point(g, h, i));
+	    patches[i]->pts[14] = *(new Point(g, h, m));
 	    patches[i]->pts[15] = *(new Point(j, k, l));
 	} 
 	inpfile.close();
     }
+}
+
+//****************************************************
+// called by glut when there are no messages to handle
+ //****************************************************
+void myFrameMove() {
+  //nothing here for now
+#ifdef _WIN32
+  Sleep(10);                                   //give ~10ms back to OS (so as not to waste the CPU)
+#endif
+  glutPostRedisplay(); // forces glut to call the display function (myDisplay())
 }
 
 //****************************************************
@@ -277,6 +302,7 @@ int main(int argc, char *argv[]) {
   glutDisplayFunc(myDisplay);				// function to run when its time to draw something
   glutReshapeFunc(myReshape);				// function to run when the window gets resized
   glutKeyboardFunc(myKeyboard);
+  //glutIdleFunc(myFrameMove);
 
   glutMainLoop();							// infinite loop that will keep drawing and resizing
   // and whatever else
