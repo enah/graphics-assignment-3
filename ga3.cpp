@@ -132,15 +132,14 @@ void myReshape(int w, int h) {
   glViewport (0,0,viewport.w,viewport.h);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(-4, 4, -4, 4, 0, -8);
+  glOrtho(-4, 4, -4, 4, 4, -4);
   //gluOrtho2D(0, viewport.w, 0, viewport.h);
 
 }
 
 void uniformTesselation() {
-    //gl stuff (color?) here?
+    int numSteps = (int)(1.0 / limit) + 1;
     for (int i = 0; i < numPatches; i++) {
-	int numSteps = (int)(1.0 / limit) + 1;
 	//printf("%d", numSteps);
 	Point* curr = new Point[numSteps];
 	Point* prev = new Point[numSteps];
