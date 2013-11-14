@@ -227,15 +227,15 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
 	drawTriangle(c, nca, nbc, patchNum, recur + 1); // ok
     } else if (eab && ebc) {
 	drawTriangle(b, nbc, nab, patchNum, recur + 1);
-	drawTriangle(c, nbc, nab, patchNum, recur + 1);
-	drawTriangle(a, c, nab, patchNum, recur + 1);
+	drawTriangle(c, nab, nbc, patchNum, recur + 1);
+	drawTriangle(a, c, nab, patchNum, recur + 1); // need to change
     } else if (ebc && eca) {
 	drawTriangle(c, nca, nbc, patchNum, recur + 1);
-	drawTriangle(a, nca, nbc, patchNum, recur + 1);
+	drawTriangle(a, nbc, nca, patchNum, recur + 1);
 	drawTriangle(b, a, nbc, patchNum, recur + 1);
     } else if (eca && eab) {
 	drawTriangle(a, nab, nca, patchNum, recur + 1);
-	drawTriangle(b, nab, nca, patchNum, recur + 1);
+	drawTriangle(b, nca, nab, patchNum, recur + 1);
 	drawTriangle(c, b, nca, patchNum, recur + 1);
     } else if (eab) {
 	drawTriangle(c, nab, a, patchNum, recur + 1);
