@@ -35,6 +35,7 @@ using namespace std;
 float limit;
 bool adaptive = false;
 int numPatches;
+bool lines = true;
 
 
 // Classes
@@ -72,7 +73,7 @@ public:
 	return distance(p) > limit;
     }
     void putVertex() {
-	glVertex3f(x, y, -z); // negate z?
+	glVertex3f(x, y, z);
 	return;
     }
     void drawFrom(Point p) {
@@ -83,6 +84,7 @@ public:
 	glEnd();
 	return;
     }
+    
     float x, y, z, u, v;
 };
 
@@ -107,7 +109,7 @@ public:
 	return Curve(pts[v*4], pts[v*4+1], pts[v*4+2], pts[v*4+3]);
     }
     Curve getCurveV(int u) {
-	return Curve(pts[u], pts[u+4], pts[u+8], pts[u*12]);
+	return Curve(pts[u], pts[u+4], pts[u+8], pts[u+12]);
     }
     Curve interpolateU(float v) {
 	Point a = getCurveV(0).interpolate(v);
@@ -138,7 +140,8 @@ void initScene() {
 
   // Nothing to do here for this simple example.
     glLoadIdentity();
-
+    glutInitDisplayMode(GLUT_DEPTH);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
 //****************************************************
@@ -158,9 +161,53 @@ void myReshape(int w, int h) {
 
 // counterclockwise from face up
 void putNormal(Point a, Point b, Point c) {
-    Point ab = -1 * a + b;
-    Point ac = -1 * a + c;
+    Point ab = a * -1.0 + b;
+    Point ac = a * -1.0 + c;
     glNormal3f(ab.y*ac.z - ab.z*ac.y, ab.z*ac.x-ab.x*ac.z, ab.x*ac.y-ab.y*ac.x);
+}
+
+void interpolatePoints(Point* points, int patchNum, int numSteps) {
+    for (int j = 0; j < numSteps - 1; j++) {
+	for (int i = 0; i < numSteps - 1; i++) {
+	    points[j*numSteps+i] = patches[patchNum]->interpolate(i*limit, j*limit);
+	}
+	points[(j+1)*numSteps-1] = patches[patchNum]->interpolate(1.0, j*limit);
+    }
+    for (int i = 0; i < numSteps - 1; i++) {
+	points[(numSteps-1)*numSteps+i] = patches[patchNum]->interpolate(i*limit, 1.0);
+    }
+    points[numSteps*numSteps-1] = patches[patchNum]->interpolate(1.0, 1.0);
+}
+
+void printPoints(Point *points, int numSteps) {
+    for (int j = 0; j < numSteps; j++) {
+	for (int i = 0; i < numSteps; i++) {
+	    Point p = points[j*numSteps+i];
+	    printf("%.2f %.2f %.2f  ", p.x, p.y, p.z);
+	}
+	printf("\n");
+    }
+}
+
+void uniTesQuad() {
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // should be in init, then keyboard
+    glBegin(GL_QUADS);
+    int numSteps = (int)(1.0/ limit) + 2;
+    for (int x = 0; x < numPatches; x++) {
+	Point* points = new Point[numSteps*numSteps];
+	interpolatePoints(points, x, numSteps);
+	//printPoints(points, numSteps);
+	for(int j = 0; j < numSteps - 1; j++) {
+	    for(int i = 0; i < numSteps - 1; i++) {
+		putNormal(points[j*numSteps+i], points[j*numSteps+i+1], points[(j+1)*numSteps+i]);
+		points[j*numSteps+i].putVertex();
+		points[j*numSteps+i+1].putVertex();
+		points[(j+1)*numSteps+i+1].putVertex();
+		points[(j+1)*numSteps+i].putVertex();
+	    }
+	}
+    }
+    glEnd();
 }
 
 void uniformTesselation() {
@@ -228,23 +275,23 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
     } else if (eab && ebc) {
 	drawTriangle(b, nbc, nab, patchNum, recur + 1);
 	drawTriangle(c, nab, nbc, patchNum, recur + 1);
-	drawTriangle(a, c, nab, patchNum, recur + 1); // need to change
+	drawTriangle(a, nab, c, patchNum, recur + 1); // need to change
     } else if (ebc && eca) {
 	drawTriangle(c, nca, nbc, patchNum, recur + 1);
 	drawTriangle(a, nbc, nca, patchNum, recur + 1);
-	drawTriangle(b, a, nbc, patchNum, recur + 1);
+	drawTriangle(b, nbc, a, patchNum, recur + 1);
     } else if (eca && eab) {
 	drawTriangle(a, nab, nca, patchNum, recur + 1);
 	drawTriangle(b, nca, nab, patchNum, recur + 1);
-	drawTriangle(c, b, nca, patchNum, recur + 1);
+	drawTriangle(c, nca, b, patchNum, recur + 1);
     } else if (eab) {
-	drawTriangle(c, nab, a, patchNum, recur + 1);
+	drawTriangle(c, a, nab, patchNum, recur + 1);
 	drawTriangle(c, nab, b, patchNum, recur + 1);
     } else if (ebc) {
-	drawTriangle(a, nbc, b, patchNum, recur + 1);
+	drawTriangle(a, b, nbc, patchNum, recur + 1);
 	drawTriangle(a, nbc, c, patchNum, recur + 1);
     } else if (eca) {
-	drawTriangle(b, nca, c, patchNum, recur + 1);
+	drawTriangle(b, a, nca, patchNum, recur + 1);
 	drawTriangle(b, nca, a, patchNum, recur + 1);
     } else {
 	putNormal(a, b, c);
@@ -255,8 +302,7 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
 }
 
 void adaptiveTessalation() {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glBegin(GL_TRIANLGES);
+    glBegin(GL_TRIANGLES);
     for (int i = 0; i < numPatches; i++) {
 	//	printf("what about");
 	Point a = patches[i]->pts[0];
@@ -300,7 +346,7 @@ void myDisplay() {
     if (adaptive) {
 	adaptiveTessalation();
     } else {
-	uniformTesselation();
+	uniTesQuad();
     }
     glFlush();
     glutSwapBuffers();					// swap buffers (we earlier set double buffer)
@@ -356,7 +402,13 @@ void myKeyboard(unsigned char key, int mouseX, int mouseY) {
 	// toggle shading
 	break;
     case 'w':
-	// toggle between filled and wireframe
+	if (lines) {
+	    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	    lines = false;
+	} else {
+	    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	    lines = true;
+	}
 	break;
     case 'h': // optional
 	// toggle between filled and hidden-line mode
@@ -436,7 +488,7 @@ void myFrameMove() {
 // the usual stuff, nothing exciting here
 //****************************************************
 int main(int argc, char *argv[]) {
-    printf("not even");
+    //printf("not even");
 
     //This initializes glut
     glutInit(&argc, argv);
@@ -451,13 +503,13 @@ int main(int argc, char *argv[]) {
     string file = argv[1];
     limit = atof(argv[2]);
     
-    printf("what about");
+    //printf("what about");
 
     if (argc > 3 && !strncmp(argv[3], "-a", 2)) {
-    adaptive = true;
+	adaptive = true;
     }
 
-    printf("okay, here?");
+    //printf("okay, here?");
 
     loadPatches(file);
     //printPatches();
