@@ -52,7 +52,7 @@ public:
     void drawFrom(Point p) {
 	glBegin(GL_LINES);
 	p.putVertex();
-	this.putVertex();
+	//	this.putVertex();
 	glEnd();
 	return;
     }
@@ -169,11 +169,29 @@ void myDisplay() {
 
 
     // Start drawing
-    glColor3f(1.0f, 0.0f, 0.0f;)
+    glColor3f(1.0f, 0.0f, 0.0f);
 
     glFlush();
     glutSwapBuffers();					// swap buffers (we earlier set double buffer)
 
+}
+
+void myKeyboard(unsigned char key, int mouseX, int mouseY) {
+    switch (key) {
+    case 's':
+	// toggle shading
+	break;
+    case 'w':
+	// toggle between filled and wireframe
+	break;
+    case 'h': // optional
+	// toggle between filled and hidden-line mode
+	break;
+    // rotate object with arrow keys
+    // translate object with shift+arrow keys
+    default:
+	break;
+    }
 }
 
 void loadPatches(string file) {
@@ -184,28 +202,28 @@ void loadPatches(string file) {
 	inpfile >> numPatches;
 	patches = new Patch*[numPatches];
 	float a, b, c, d, e, f, g, h, i, j, k, l;
-	for (int i = 0; i < len; i++) {
+	for (int i = 0; i < numPatches; i++) {
 	    inpfile >> a >> b >> c >> d >> e >> f >> g >> h >> i >> j >> k >> l;
 	    patches[i] = new Patch();
-	    patches[i]->pts[0] = new Point(a, b, c);
-	    patches[i]->pts[1] = new Point(d, e, f);
-	    patches[i]->pts[2] = new Point(g, h, i);
-	    patches[i]->pts[3] = new Point(j, k, l);
+	    patches[i]->pts[0] = *(new Point(a, b, c)); // I feel like you should do this another way
+	    patches[i]->pts[1] = *(new Point(d, e, f));
+	    patches[i]->pts[2] = *(new Point(g, h, i));
+	    patches[i]->pts[3] = *(new Point(j, k, l));
 	    inpfile >> a >> b >> c >> d >> e >> f >> g >> h >> i >> j >> k >> l;
-	    patches[i]->pts[4] = new Point(a, b, c);
-	    patches[i]->pts[5] = new Point(d, e, f);
-	    patches[i]->pts[6] = new Point(g, h, i);
-	    patches[i]->pts[7] = new Point(j, k, l);
+	    patches[i]->pts[4] = *(new Point(a, b, c));
+	    patches[i]->pts[5] = *(new Point(d, e, f));
+	    patches[i]->pts[6] = *(new Point(g, h, i));
+	    patches[i]->pts[7] = *(new Point(j, k, l));
 	    inpfile >> a >> b >> c >> d >> e >> f >> g >> h >> i >> j >> k >> l;
-	    patches[i]->pts[8] = new Point(a, b, c);
-	    patches[i]->pts[9] = new Point(d, e, f);
-	    patches[i]->pts[10] = new Point(g, h, i);
-	    patches[i]->pts[11] = new Point(j, k, l);
+	    patches[i]->pts[8] = *(new Point(a, b, c));
+	    patches[i]->pts[9] = *(new Point(d, e, f));
+	    patches[i]->pts[10] = *(new Point(g, h, i));
+	    patches[i]->pts[11] = *(new Point(j, k, l));
 	    inpfile >> a >> b >> c >> d >> e >> f >> g >> h >> i >> j >> k >> l;
-	    patches[i]->pts[12] = new Point(a, b, c);
-	    patches[i]->pts[13] = new Point(d, e, f);
-	    patches[i]->pts[14] = new Point(g, h, i);
-	    patches[i]->pts[15] = new Point(j, k, l);
+	    patches[i]->pts[12] = *(new Point(a, b, c));
+	    patches[i]->pts[13] = *(new Point(d, e, f));
+	    patches[i]->pts[14] = *(new Point(g, h, i));
+	    patches[i]->pts[15] = *(new Point(j, k, l));
 	} 
 	inpfile.close();
     }
@@ -226,7 +244,7 @@ int main(int argc, char *argv[]) {
     viewport.h = 400;
 
     string file = argv[1];
-    limit = argv[2];
+    limit = atof(argv[2]);
 
     if (argc > 3 && !strncmp(argv[3], "-a", 2)) {
         adaptive = true;

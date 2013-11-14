@@ -12,7 +12,7 @@ endif
 
 RM = /bin/rm -f 
 all: main 
-main: example_01.o 
+main: ga3.o 
 	$(libCC) $(CFLAGS) -o as3 ga3.o $(LDFLAGS)
 ga3.o: ga3.cpp
 	$(CC) $(CFLAGS) -c ga3.cpp -o ga3.o 
