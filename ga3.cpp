@@ -24,6 +24,8 @@
 
 #include <IL/il.h>
 
+#define TOLERANCE 0.001
+
 using namespace std;
 
 // Classes
@@ -130,16 +132,19 @@ void myReshape(int w, int h) {
   glViewport (0,0,viewport.w,viewport.h);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluOrtho2D(0, viewport.w, 0, viewport.h);
+  glOrtho(-4, 4, -4, 4, 0, -8);
+  //gluOrtho2D(0, viewport.w, 0, viewport.h);
 
 }
 
 void uniformTesselation() {
     //gl stuff (color?) here?
     for (int i = 0; i < numPatches; i++) {
-	int numSteps = (int)(1.0 / limit);
+	int numSteps = (int)(1.0 / limit) + 1;
+	//printf("%d", numSteps);
 	Point* curr = new Point[numSteps];
 	Point* prev = new Point[numSteps];
+	Point* temp;
 	curr[0] = patches[i]->pts[0];
 	for (int u = 1; u < numSteps; u++) {
 	    prev[u] = patches[i]->interpolate(u*limit,0.0);
@@ -148,12 +153,14 @@ void uniformTesselation() {
 	for (int v = 1; v < numSteps; v++) {
 	    curr[0] = patches[i]->interpolate(0.0, v*limit);
 	    curr[0].drawFrom(prev[0]);
-	    for (int u = 1; u < numSteps; u++) { // tolerance?
+	    for (int u = 1; u < numSteps; u++) {
 		curr[u] = patches[i]->interpolate(u*limit, v*limit);
 		curr[u].drawFrom(curr[u-1]);
 		curr[u].drawFrom(prev[u]);
 	    }
+	    temp = prev;
 	    prev = curr;
+	    curr = temp;
 	}
     }
 }
@@ -172,17 +179,18 @@ void myDisplay() {
     // Start drawing
     glColor3f(1.0f, 0.5f, 0.0f);
 
-  glBegin(GL_LINE_STRIP);
-  glVertex3f(0.0f, 0.0f, 0.0f);
-  glVertex3f(0.0f, 0.5f, 0.0f);
-  glVertex3f(0.5f, 0.0f, 0.0f);
-  glEnd();    
+  // Glbegin(Gl_LINE_STRIP);
+  // glVertex3f(0.0f, 0.0f, 0.0f);
+  // glVertex3f(0.0f, 0.5f, 0.0f);
+  // glVertex3f(0.5f, 0.0f, 0.0f);
+  // glEnd();  
+  
     
     uniformTesselation();
 
     glFlush();
     glutSwapBuffers();					// swap buffers (we earlier set double buffer)
-    printf("hello world");
+    //printf("hello world");
 }
 
 void myKeyboard(unsigned char key, int mouseX, int mouseY) {
