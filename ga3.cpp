@@ -212,17 +212,26 @@ void drawTriangle(Point a, Point b, Point c, int patchNum) {
 	drawTriangle(b, bc, ab);
 	drawTriangle(c, ca, bc);
     } else if (eab && ebc) {
-
+	drawTriangle(b, bc, ab);
+	drawTriangle(c, bc, ab);
+	drawTriangle(a, c, ab);
     } else if (ebc && eca) {
-
+	drawTriangle(c, ca, bc);
+	drawTriangle(a, ca, bc);
+	drawTriangle(b, a, bc);
     } else if (eca && eab) {
-
+	drawTriangle(a, ab, ca);
+	drawTriangle(b, ab, ca);
+	drawTriangle(c, b, ca);
     } else if (eab) {
-
+	drawTriangle(c, ab, a);
+	drawTriangle(c, ab, b);
     } else if (ebc) {
-
+	drawTriangle(a, bc, b);
+	drawTriangle(a, bc, c);
     } else if (eca) {
-
+	drawTriangle(b, ca, c);
+	drawTriangle(b, ca, a);
     }
 }
 
