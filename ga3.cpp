@@ -52,6 +52,7 @@ public:
     void drawFrom(Point p) {
 	glBegin(GL_LINES);
 	p.putVertex();
+	putVertex();
 	//	this.putVertex();
 	glEnd();
 	return;
@@ -170,6 +171,8 @@ void myDisplay() {
 
     // Start drawing
     glColor3f(1.0f, 0.0f, 0.0f);
+    
+    uniformTesselation();
 
     glFlush();
     glutSwapBuffers();					// swap buffers (we earlier set double buffer)
