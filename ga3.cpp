@@ -54,6 +54,9 @@ public:
     Point midpoint(Point p) {
 	return (this + p) * 0.5;
     }
+    bool far(Point p) {
+	return distance(p) > limit;
+    }
     void putVertex() {
 	glVertex3f(x, y, -z); // negate z?
 	return;
@@ -185,6 +188,44 @@ void uniformTesselation() {
     }
 }
 
+void adaptiveTessalation() {
+    for (int i = 0; i < numPatches; i++) {
+
+    }
+
+}
+
+void drawTriangle(Point a, Point b, Point c, int patchNum) {
+    glBegin(GL_LINE_LOOP);
+    a.putVertex();
+    b.putVertex();
+    c.putVertex();
+    Point ab = a.midpoint(b);
+    Point bc = b.midpoint(c);
+    Point ca = c.midpoint(a);
+    // the latter should probably go in the close function
+    bool eab = ab.far(patches[patchNum]->interpolate(ab.u, ab.v));
+    bool ebc = bc.far(patches[patchNum]->interpolate(bc.u, bc.v));
+    bool eca = ca.far(patches[patchNum]->interpolate(ca.u, ca.v));
+    if (eab && ebc && eca) {
+	drawTriangle(a, ab, ca);
+	drawTriangle(b, bc, ab);
+	drawTriangle(c, ca, bc);
+    } else if (eab && ebc) {
+
+    } else if (ebc && eca) {
+
+    } else if (eca && eab) {
+
+    } else if (eab) {
+
+    } else if (ebc) {
+
+    } else if (eca) {
+
+    }
+}
+
 //****************************************************
 // function that does the actual drawing of stuff
 //***************************************************
@@ -205,9 +246,11 @@ void myDisplay() {
   // glVertex3f(0.5f, 0.0f, 0.0f);
   // glEnd();  
   
-    
-    uniformTesselation();
+    if (adaptive) {
 
+    } else {
+	uniformTesselation();
+    }
     glFlush();
     glutSwapBuffers();					// swap buffers (we earlier set double buffer)
     //printf("hello world");
