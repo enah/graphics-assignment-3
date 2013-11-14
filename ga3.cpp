@@ -190,7 +190,16 @@ void uniformTesselation() {
 
 void adaptiveTessalation() {
     for (int i = 0; i < numPatches; i++) {
-
+	Point a = patches[i]->pts[0];
+	Point b = patches[i]->pts[3];
+	Point c = patches[i]->pts[12];
+	Point d = patches[i]->pts[15];
+	b.u = 1;
+	c.v = 1;
+	d.u = 1;
+	d.v = 1;
+	drawTriangle(a, b, c, i);
+	drawTrianlge(d, b, c, i);
     }
 
 }
