@@ -25,6 +25,7 @@
 #include <IL/il.h>
 
 #define ANGLE 15.0
+#define MAX_RECUR 10
 
 using namespace std;
 
@@ -155,15 +156,22 @@ void myReshape(int w, int h) {
 
 }
 
+// counterclockwise from face up
+void putNormal(Point a, Point b, Point c) {
+    Point ab = -1 * a + b;
+    Point ac = -1 * a + c;
+    glNormal3f(ab.y*ac.z - ab.z*ac.y, ab.z*ac.x-ab.x*ac.z, ab.x*ac.y-ab.y*ac.x);
+}
+
 void uniformTesselation() {
     int numSteps = (int)(1.0 / limit) + 1;
     for (int i = 0; i < numPatches; i++) {
-	glColor3f(limit*i, 1.0 - limit*i, 0.0f);
+	glColor3f(((float)i)/numPatches, 1.0 - ((float)i)/numPatches, 0.0f);
 	//printf("%d", numSteps);
 	Point* curr = new Point[numSteps + 1];
 	Point* prev = new Point[numSteps + 1];
 	Point* temp;
-	curr[0] = patches[i]->pts[0];
+	prev[0] = patches[i]->pts[0];
 	for (int u = 1; u < numSteps; u++) {
 	    prev[u] = patches[i]->interpolate(u*limit,0.0);
 	    prev[u].drawFrom(prev[u-1]);
@@ -195,48 +203,62 @@ void uniformTesselation() {
     }
 }
 
-void drawTriangle(Point a, Point b, Point c, int patchNum) {
-    glBegin(GL_LINE_LOOP);
-    a.putVertex();
-    b.putVertex();
-    c.putVertex();
+void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
+    if (recur > MAX_RECUR) {
+	putNormal(a, b, c);
+	a.putVertex();
+	b.putVertex();
+	c.putVertex();
+	return;
+    }
     Point ab = a.midpoint(b);
+    Point nab = patches[patchNum]->interpolate(ab.u, ab.v);
     Point bc = b.midpoint(c);
+    Point nbc = patches[patchNum]->interpolate(bc.u, bc.v);
     Point ca = c.midpoint(a);
+    Point nca = patches[patchNum]->interpolate(ca.u, ca.v);
     // the latter should probably go in the close function
-    bool eab = ab.far(patches[patchNum]->interpolate(ab.u, ab.v));
-    bool ebc = bc.far(patches[patchNum]->interpolate(bc.u, bc.v));
-    bool eca = ca.far(patches[patchNum]->interpolate(ca.u, ca.v));
+    bool eab = ab.far(nab);
+    bool ebc = bc.far(nbc);
+    bool eca = ca.far(nca);
     if (eab && ebc && eca) {
-	drawTriangle(a, ab, ca, patchNum);
-	drawTriangle(b, bc, ab, patchNum);
-	drawTriangle(c, ca, bc, patchNum);
+	drawTriangle(a, nab, nca, patchNum, recur + 1); // ok
+	drawTriangle(b, nbc, nab, patchNum, recur + 1); // ok
+	drawTriangle(c, nca, nbc, patchNum, recur + 1); // ok
     } else if (eab && ebc) {
-	drawTriangle(b, bc, ab, patchNum);
-	drawTriangle(c, bc, ab, patchNum);
-	drawTriangle(a, c, ab, patchNum);
+	drawTriangle(b, nbc, nab, patchNum, recur + 1);
+	drawTriangle(c, nbc, nab, patchNum, recur + 1);
+	drawTriangle(a, c, nab, patchNum, recur + 1);
     } else if (ebc && eca) {
-	drawTriangle(c, ca, bc, patchNum);
-	drawTriangle(a, ca, bc, patchNum);
-	drawTriangle(b, a, bc, patchNum);
+	drawTriangle(c, nca, nbc, patchNum, recur + 1);
+	drawTriangle(a, nca, nbc, patchNum, recur + 1);
+	drawTriangle(b, a, nbc, patchNum, recur + 1);
     } else if (eca && eab) {
-	drawTriangle(a, ab, ca, patchNum);
-	drawTriangle(b, ab, ca, patchNum);
-	drawTriangle(c, b, ca, patchNum);
+	drawTriangle(a, nab, nca, patchNum, recur + 1);
+	drawTriangle(b, nab, nca, patchNum, recur + 1);
+	drawTriangle(c, b, nca, patchNum, recur + 1);
     } else if (eab) {
-	drawTriangle(c, ab, a, patchNum);
-	drawTriangle(c, ab, b, patchNum);
+	drawTriangle(c, nab, a, patchNum, recur + 1);
+	drawTriangle(c, nab, b, patchNum, recur + 1);
     } else if (ebc) {
-	drawTriangle(a, bc, b, patchNum);
-	drawTriangle(a, bc, c, patchNum);
+	drawTriangle(a, nbc, b, patchNum, recur + 1);
+	drawTriangle(a, nbc, c, patchNum, recur + 1);
     } else if (eca) {
-	drawTriangle(b, ca, c, patchNum);
-	drawTriangle(b, ca, a, patchNum);
+	drawTriangle(b, nca, c, patchNum, recur + 1);
+	drawTriangle(b, nca, a, patchNum, recur + 1);
+    } else {
+	putNormal(a, b, c);
+	a.putVertex();
+	b.putVertex();
+	c.putVertex();
     }
 }
 
 void adaptiveTessalation() {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glBegin(GL_TRIANLGES);
     for (int i = 0; i < numPatches; i++) {
+	//	printf("what about");
 	Point a = patches[i]->pts[0];
 	Point b = patches[i]->pts[3];
 	Point c = patches[i]->pts[12];
@@ -245,10 +267,12 @@ void adaptiveTessalation() {
 	c.v = 1;
 	d.u = 1;
 	d.v = 1;
-	drawTriangle(a, b, c, i);
-	drawTriangle(d, b, c, i);
+	//	printf("getshere");
+	drawTriangle(a, c, b, i, 0);
+	drawTriangle(d, b, c, i, 0);
+	//	printf("here?");
     }
-
+    glEnd();
 }
 
 
@@ -274,7 +298,7 @@ void myDisplay() {
   // glEnd();  
   
     if (adaptive) {
-
+	adaptiveTessalation();
     } else {
 	uniformTesselation();
     }
@@ -412,6 +436,8 @@ void myFrameMove() {
 // the usual stuff, nothing exciting here
 //****************************************************
 int main(int argc, char *argv[]) {
+    printf("not even");
+
     //This initializes glut
     glutInit(&argc, argv);
     
@@ -424,10 +450,14 @@ int main(int argc, char *argv[]) {
 
     string file = argv[1];
     limit = atof(argv[2]);
+    
+    printf("what about");
 
     if (argc > 3 && !strncmp(argv[3], "-a", 2)) {
-        adaptive = true;
+    adaptive = true;
     }
+
+    printf("okay, here?");
 
     loadPatches(file);
     //printPatches();
