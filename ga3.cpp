@@ -28,6 +28,14 @@
 
 using namespace std;
 
+// Globals
+
+
+float limit;
+bool adaptive = false;
+int numPatches;
+
+
 // Classes
 
 class Viewport;
@@ -37,22 +45,27 @@ class Viewport {
     int w, h; // width and height
 };
 
+Viewport	viewport;
+
 class Point {
 public:
     Point(): x(0), y(0), z(0), u(0), v(0) {}
     Point(float X, float Y, float Z): x(X), y(Y), z(Z), u(0), v(0) {}
-    Point(float X, float Y, float Z): x(X), y(Y), z(Z), u(U), v(V) {}
+    Point(float X, float Y, float Z, float U, float V): x(X), y(Y), z(Z), u(U), v(V) {}
     Point operator+(Point p) {
 	return Point(x+p.x, y+p.y, z+p.z, u+p.u, v+p.v);
     }
+    Point add(Point p) {
+	return Point(x+p.x, y+p.y, z+p.z, u+p.u, v+p.v);
+    }	
     Point operator*(float m) {
 	return Point(x*m, y*m, z*m, u*m, v*m);
     }
     float distance(Point p) {
-	return sqrt((x-p.x)**2 + (y-p.y)**2 + (z-p.z)**2);
+	return sqrt(pow(x-p.x, 2) + pow(y-p.y, 2) + pow(z-p.z, 2));
     }
     Point midpoint(Point p) {
-	return (this + p) * 0.5;
+	return add(p) * 0.5;
     }
     bool far(Point p) {
 	return distance(p) > limit;
@@ -115,12 +128,6 @@ public:
     Point pts[16];
 };
 
-// Globals
-
-Viewport	viewport;
-float limit;
-bool adaptive = false;
-int numPatches;
 Patch** patches;
 
 //****************************************************
@@ -188,22 +195,6 @@ void uniformTesselation() {
     }
 }
 
-void adaptiveTessalation() {
-    for (int i = 0; i < numPatches; i++) {
-	Point a = patches[i]->pts[0];
-	Point b = patches[i]->pts[3];
-	Point c = patches[i]->pts[12];
-	Point d = patches[i]->pts[15];
-	b.u = 1;
-	c.v = 1;
-	d.u = 1;
-	d.v = 1;
-	drawTriangle(a, b, c, i);
-	drawTrianlge(d, b, c, i);
-    }
-
-}
-
 void drawTriangle(Point a, Point b, Point c, int patchNum) {
     glBegin(GL_LINE_LOOP);
     a.putVertex();
@@ -217,32 +208,50 @@ void drawTriangle(Point a, Point b, Point c, int patchNum) {
     bool ebc = bc.far(patches[patchNum]->interpolate(bc.u, bc.v));
     bool eca = ca.far(patches[patchNum]->interpolate(ca.u, ca.v));
     if (eab && ebc && eca) {
-	drawTriangle(a, ab, ca);
-	drawTriangle(b, bc, ab);
-	drawTriangle(c, ca, bc);
+	drawTriangle(a, ab, ca, patchNum);
+	drawTriangle(b, bc, ab, patchNum);
+	drawTriangle(c, ca, bc, patchNum);
     } else if (eab && ebc) {
-	drawTriangle(b, bc, ab);
-	drawTriangle(c, bc, ab);
-	drawTriangle(a, c, ab);
+	drawTriangle(b, bc, ab, patchNum);
+	drawTriangle(c, bc, ab, patchNum);
+	drawTriangle(a, c, ab, patchNum);
     } else if (ebc && eca) {
-	drawTriangle(c, ca, bc);
-	drawTriangle(a, ca, bc);
-	drawTriangle(b, a, bc);
+	drawTriangle(c, ca, bc, patchNum);
+	drawTriangle(a, ca, bc, patchNum);
+	drawTriangle(b, a, bc, patchNum);
     } else if (eca && eab) {
-	drawTriangle(a, ab, ca);
-	drawTriangle(b, ab, ca);
-	drawTriangle(c, b, ca);
+	drawTriangle(a, ab, ca, patchNum);
+	drawTriangle(b, ab, ca, patchNum);
+	drawTriangle(c, b, ca, patchNum);
     } else if (eab) {
-	drawTriangle(c, ab, a);
-	drawTriangle(c, ab, b);
+	drawTriangle(c, ab, a, patchNum);
+	drawTriangle(c, ab, b, patchNum);
     } else if (ebc) {
-	drawTriangle(a, bc, b);
-	drawTriangle(a, bc, c);
+	drawTriangle(a, bc, b, patchNum);
+	drawTriangle(a, bc, c, patchNum);
     } else if (eca) {
-	drawTriangle(b, ca, c);
-	drawTriangle(b, ca, a);
+	drawTriangle(b, ca, c, patchNum);
+	drawTriangle(b, ca, a, patchNum);
     }
 }
+
+void adaptiveTessalation() {
+    for (int i = 0; i < numPatches; i++) {
+	Point a = patches[i]->pts[0];
+	Point b = patches[i]->pts[3];
+	Point c = patches[i]->pts[12];
+	Point d = patches[i]->pts[15];
+	b.u = 1;
+	c.v = 1;
+	d.u = 1;
+	d.v = 1;
+	drawTriangle(a, b, c, i);
+	drawTriangle(d, b, c, i);
+    }
+
+}
+
+
 
 //****************************************************
 // function that does the actual drawing of stuff
