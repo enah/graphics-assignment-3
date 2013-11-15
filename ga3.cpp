@@ -147,7 +147,7 @@ void initScene() {
 
   // Nothing to do here for this simple example.
 
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGB);
+    //glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGB);
     
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -163,13 +163,13 @@ void initScene() {
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 
-    //glEnable(GL_LIGHTING);
-    //glEnable(GL_LIGHT0);
-    //glEnable(GL_LIGHT1);
-    //glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHT1);
+    glEnable(GL_DEPTH_TEST);
     //glDepthMask(GL_TRUE);
-    glDepthFunc(GL_LEQUAL);
-    glEnable(GL_CULL_FACE);
+    //glDepthFunc(GL_LEQUAL);
+    //glEnable(GL_CULL_FACE);
     //glDepthRange(0.0f, 1.0f);
 }
 
@@ -331,7 +331,7 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
     // 	nca.print();
     // }
     // printf("\n");
-    if (false) {//eab || ebc || eca) {
+    if (eab || ebc || eca) {
 	nab.u = ab.u;
 	nab.v = ab.v;
 	nbc.u = bc.u;
@@ -342,7 +342,7 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
 	drawTriangle(b, nbc, nab, patchNum, recur + 1); // ok
 	drawTriangle(c, nca, nbc, patchNum, recur + 1); // ok
 	drawTriangle(nab, nbc, nca, patchNum, recur + 1);
-    } else if (true) { // not working
+    } else if (eab && ebc) { // not working
 	nab.u = ab.u;
 	nab.v = ab.v;
 	nbc.u = bc.u;
@@ -350,7 +350,7 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
 	drawTriangle(b, nbc, nab, patchNum, recur + 1);
 	drawTriangle(c, nab, nbc, patchNum, recur + 1);
 	drawTriangle(a, nab, c, patchNum, recur + 1); // need to change
-    } else if (false) { // not working
+    } else if (ebc && eca) { // not working
 	nbc.u = bc.u;
 	nbc.v = bc.v;
 	nca.u = ca.u;
@@ -358,7 +358,7 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
 	drawTriangle(c, nca, nbc, patchNum, recur + 1);
 	drawTriangle(a, nbc, nca, patchNum, recur + 1);
 	drawTriangle(b, nbc, a, patchNum, recur + 1);
-    } else if (false) { // weird
+    } else if (eab && eca) { // weird
 	nab.u = ab.u;
 	nab.v = ab.v;
 	nca.u = ca.u;
@@ -366,12 +366,12 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
 	drawTriangle(a, nab, nca, patchNum, recur + 1);
 	drawTriangle(b, nca, nab, patchNum, recur + 1);
 	drawTriangle(c, nca, b, patchNum, recur + 1);
-    } else if (false) { // weird
-	nbc.u = bc.u;
-	nbc.v = bc.v;
+    } else if (eab) { // weird
+	nab.u = ab.u;
+	nab.v = ab.v;
 	drawTriangle(c, a, nab, patchNum, recur + 1);
 	drawTriangle(c, nab, b, patchNum, recur + 1);
-    } else if (false) { // weird
+    } else if (ebc) { // weird
 	nbc.u = bc.u;
 	nbc.v = bc.v;
 	drawTriangle(a, b, nbc, patchNum, recur + 1);
@@ -601,7 +601,7 @@ int main(int argc, char *argv[]) {
     glutInit(&argc, argv);
     
     //This tells glut to use a double-buffered window with red, green, and blue channels
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     
     // Initalize theviewport size
     viewport.w = 400;
