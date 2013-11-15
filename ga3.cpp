@@ -38,8 +38,9 @@ int numPatches;
 bool lines = false;
 GLfloat mat_specular[] = {21.0, 21.0, 21.0, 1.0};
 GLfloat mat_diffuse[] = {12.5, 12.5, 12.5, 0.5};
+GLfloat mat_ambient[] = {0.05, 0.05, 0.05, 1.0};
 GLfloat mat_shininess[] = {20.0};
-GLfloat light_position[] = {-1.0, -1.0, -1.0, -1.0};
+GLfloat light_position[] = {0.0, -1.0, -1.0, -1.0};
 
 // Classes
 
@@ -148,13 +149,15 @@ void initScene() {
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glShadeModel(GL_SMOOTH);
 
-    //glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
-    //glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse);
-    //glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHT1);
     glEnable(GL_DEPTH_TEST);
 }
 
