@@ -36,6 +36,7 @@ float limit;
 bool adaptive = false;
 int numPatches;
 bool lines = true;
+bool smooth = true;
 GLfloat mat_specular[] = {21.0, 21.0, 21.0, 1.0};
 GLfloat mat_diffuse[] = {12.5, 12.5, 12.5, 0.5};
 GLfloat mat_ambient[] = {0.5, 0.5, 0.5, 1.0};
@@ -462,7 +463,13 @@ void myKeyboard(unsigned char key, int mouseX, int mouseY) {
 	exit(0);
 	break;
     case 's':
-	// toggle shading
+	if (smooth) {
+	    glShadeModel(GL_FLAT);
+	    smooth = false;
+	} else {
+	    glShadeModel(GL_SMOOTH);
+	    smooth = true;
+	}
 	break;
     case 'w':
 	if (lines) {
