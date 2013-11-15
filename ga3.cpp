@@ -95,6 +95,13 @@ public:
     float x, y, z, u, v;
 };
 
+class Triangle {
+public:
+    Triangle(Point A, Point B, Point C): a(A), b(B), c(C) {}
+
+    Point a, b, c;
+};
+
 class Curve {
 public:
     Curve(Point p0, Point p1, Point p2, Point p3): pt0(p0), pt1(p1), pt2(p2), pt3(p3) {}
@@ -163,10 +170,6 @@ void initScene() {
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glEnable(GL_LIGHT1);
-    glEnable(GL_DEPTH_TEST);
     //glDepthMask(GL_TRUE);
     //glDepthFunc(GL_LEQUAL);
     //glEnable(GL_CULL_FACE);
@@ -511,9 +514,18 @@ void myKeyboard(unsigned char key, int mouseX, int mouseY) {
     case 'w':
 	if (lines) {
 	    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	    glEnable(GL_LIGHTING);
+	    glEnable(GL_LIGHT0);
+	    glEnable(GL_LIGHT1);
+	    glEnable(GL_DEPTH_TEST);
 	    lines = false;
 	} else {
 	    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	    glDisable(GL_LIGHTING);
+	    glDisable(GL_LIGHT0);
+	    glDisable(GL_LIGHT1);
+	    glDisable(GL_DEPTH_TEST);
 	    lines = true;
 	}
 	break;
