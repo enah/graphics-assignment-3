@@ -183,7 +183,7 @@ void myReshape(int w, int h) {
 void putNormal(Point a, Point b, Point c) {
     Point ab = a * -1.0 + b;
     Point ac = a * -1.0 + c;
-    glNormal3f(-ab.y*ac.z + ab.z*ac.y, -ab.z*ac.x+ab.x*ac.z, -ab.x*ac.y+ab.y*ac.x);
+    glNormal3f(ab.y*ac.z - ab.z*ac.y, ab.z*ac.x-ab.x*ac.z, ab.x*ac.y-ab.y*ac.x);
 }
 
 void interpolatePoints(Point* points, int patchNum, int numSteps) {
@@ -219,11 +219,11 @@ void uniTesQuad() {
 	//printPoints(points, numSteps);
 	for(int j = 0; j < numSteps - 1; j++) {
 	    for(int i = 0; i < numSteps - 1; i++) {
-		putNormal(points[j*numSteps+i], points[j*numSteps+i+1], points[(j+1)*numSteps+i]);
+		putNormal(points[j*numSteps+i], points[(j+1)*numSteps+i], points[j*numSteps+i+1]);
 		points[j*numSteps+i].putVertex();
-		points[j*numSteps+i+1].putVertex();
-		points[(j+1)*numSteps+i+1].putVertex();
 		points[(j+1)*numSteps+i].putVertex();
+		points[(j+1)*numSteps+i+1].putVertex();
+		points[j*numSteps+i+1].putVertex();
 	    }
 	}
     }
@@ -277,7 +277,7 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
     // c.print();
     // printf("\n");
     if (recur > MAX_RECUR) {
-	putNormal(c, b, a);
+	putNormal(a, b, c);
 	a.putVertex();
 	b.putVertex();
 	c.putVertex();
@@ -358,7 +358,7 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
 	drawTriangle(b, c, nca, patchNum, recur + 1);
 	drawTriangle(b, nca, a, patchNum, recur + 1);
     } else {
-	putNormal(c, b, a);
+	putNormal(a, b, c);
 	a.putVertex();
 	b.putVertex();
 	c.putVertex();
