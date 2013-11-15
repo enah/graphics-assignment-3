@@ -25,7 +25,7 @@
 #include <IL/il.h>
 
 #define ANGLE 15.0
-#define MAX_RECUR 10
+#define MAX_RECUR 1
 
 using namespace std;
 
@@ -146,10 +146,15 @@ Patch** patches;
 void initScene() {
 
   // Nothing to do here for this simple example.
+
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGB);
+    
+    glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glutInitDisplayMode(GLUT_DEPTH);
+    //gluLookAt(0, 0, 5, 0, 0, 0, 0, 1, 0);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glClearColor(0.0, 0.0, 0.0, 0.0);
+    //glClearDepth(4.0f);
     glShadeModel(GL_SMOOTH);
 
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
@@ -158,10 +163,14 @@ void initScene() {
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glEnable(GL_LIGHT1);
-    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_LIGHTING);
+    //glEnable(GL_LIGHT0);
+    //glEnable(GL_LIGHT1);
+    //glEnable(GL_DEPTH_TEST);
+    //glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LEQUAL);
+    glEnable(GL_CULL_FACE);
+    //glDepthRange(0.0f, 1.0f);
 }
 
 //****************************************************
@@ -174,7 +183,9 @@ void myReshape(int w, int h) {
   glViewport (0,0,viewport.w,viewport.h);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(-4, 4, -4, 4, 4, -4);
+  //glFrustum(-4, 4, -4, 4,
+  //gluPerspective(90, 1, 0.1, 100); // make field of view wider
+  glOrtho(-4, 4, -4, 4, -4, 4);
   //gluOrtho2D(0, viewport.w, 0, viewport.h);
 
 }
@@ -183,7 +194,18 @@ void myReshape(int w, int h) {
 void putNormal(Point a, Point b, Point c) {
     Point ab = a * -1.0 + b;
     Point ac = a * -1.0 + c;
-    glNormal3f(ab.y*ac.z - ab.z*ac.y, ab.z*ac.x-ab.x*ac.z, ab.x*ac.y-ab.y*ac.x);
+    float dot = ab.x*ac.x + ab.y*ac.y + ab.z*ac.z;
+    Point p = *(new Point());
+    float dis = p.distance(ab)*p.distance(ac);
+    float angle = acos(dot/dis);
+    float cx = ab.y*ac.z - ab.z*ac.y;
+    float cy = ab.z*ac.x - ab.x*ac.z;
+    float cz = ab.x*ac.y - ab.y*ac.x;
+    if (angle > 90.0) {
+        glNormal3f(-cx, -cy, -cz);
+    } else {
+        glNormal3f(cx, cy, cz);
+    }
 }
 
 void interpolatePoints(Point* points, int patchNum, int numSteps) {
@@ -224,6 +246,7 @@ void uniTesQuad() {
 		points[(j+1)*numSteps+i].putVertex();
 		points[(j+1)*numSteps+i+1].putVertex();
 		points[j*numSteps+i+1].putVertex();
+
 	    }
 	}
     }
@@ -308,7 +331,7 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
     // 	nca.print();
     // }
     // printf("\n");
-    if (eab && ebc && eca) {
+    if (false) {//eab || ebc || eca) {
 	nab.u = ab.u;
 	nab.v = ab.v;
 	nbc.u = bc.u;
@@ -318,7 +341,8 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
 	drawTriangle(a, nab, nca, patchNum, recur + 1); // ok
 	drawTriangle(b, nbc, nab, patchNum, recur + 1); // ok
 	drawTriangle(c, nca, nbc, patchNum, recur + 1); // ok
-    } else if (eab && ebc) {
+	drawTriangle(nab, nbc, nca, patchNum, recur + 1);
+    } else if (true) { // not working
 	nab.u = ab.u;
 	nab.v = ab.v;
 	nbc.u = bc.u;
@@ -326,7 +350,7 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
 	drawTriangle(b, nbc, nab, patchNum, recur + 1);
 	drawTriangle(c, nab, nbc, patchNum, recur + 1);
 	drawTriangle(a, nab, c, patchNum, recur + 1); // need to change
-    } else if (ebc && eca) {
+    } else if (false) { // not working
 	nbc.u = bc.u;
 	nbc.v = bc.v;
 	nca.u = ca.u;
@@ -334,7 +358,7 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
 	drawTriangle(c, nca, nbc, patchNum, recur + 1);
 	drawTriangle(a, nbc, nca, patchNum, recur + 1);
 	drawTriangle(b, nbc, a, patchNum, recur + 1);
-    } else if (eca && eab) {
+    } else if (false) { // weird
 	nab.u = ab.u;
 	nab.v = ab.v;
 	nca.u = ca.u;
@@ -342,12 +366,12 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
 	drawTriangle(a, nab, nca, patchNum, recur + 1);
 	drawTriangle(b, nca, nab, patchNum, recur + 1);
 	drawTriangle(c, nca, b, patchNum, recur + 1);
-    } else if (eab) {
+    } else if (false) { // weird
 	nbc.u = bc.u;
 	nbc.v = bc.v;
 	drawTriangle(c, a, nab, patchNum, recur + 1);
 	drawTriangle(c, nab, b, patchNum, recur + 1);
-    } else if (ebc) {
+    } else if (false) { // weird
 	nbc.u = bc.u;
 	nbc.v = bc.v;
 	drawTriangle(a, b, nbc, patchNum, recur + 1);
@@ -368,19 +392,32 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
 void adaptiveTessalation() {
     glBegin(GL_TRIANGLES);
     for (int i = 0; i < numPatches; i++) {
-	//	printf("what about");
-	Point a = patches[i]->pts[0];
-	Point b = patches[i]->pts[3];
-	Point c = patches[i]->pts[12];
-	Point d = patches[i]->pts[15];
-	b.u = 1;
-	c.v = 1;
-	d.u = 1;
-	d.v = 1;
-	//	printf("getshere");
-	drawTriangle(a, c, b, i, 0);
-	drawTriangle(d, b, c, i, 0);
-	//	printf("here?");
+	    //	printf("what about");
+	    // change this
+	    //for (int v = 0; v < 4; v++) {
+	    //    for (int u = 0; u < 4; u++) {
+	    //        patches[i]->pts[v*4+u].u = u / 3.0;
+	    //        patches[i]->pts[v*4+u].v = v / 3.0;
+	    //    }
+	    //}
+	    //for (int v = 0; v < 3; v++) {
+	    //    for (int u = 0; u < 3; u++) {
+	    //        drawTriangle(patches[i]->pts[v*4+u], patches[i]->pts[(v+1)*4+u], patches[i]->pts[v*4+u+1], i, 0);
+	    //        drawTriangle(patches[i]->pts[(v+1)*4+u+1], patches[i]->pts[v*4+u+1], patches[i]->pts[(v+1)*4+u], i, 0);
+	    //    }
+	    //}
+	    Point a = patches[i]->pts[0];
+	    Point b = patches[i]->pts[3];
+	    Point c = patches[i]->pts[12];
+	    Point d = patches[i]->pts[15];
+	    b.u = 1;
+	    c.v = 1;
+	    d.u = 1;
+	    d.v = 1;
+	    //	printf("getshere");
+	    drawTriangle(a, c, b, i, 0);
+	    drawTriangle( d, b, c, i, 0);
+	    //	printf("here?");
     }
     glEnd();
 }
