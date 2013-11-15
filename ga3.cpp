@@ -158,10 +158,10 @@ void initScene() {
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glEnable(GL_LIGHT1);
-    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_LIGHTING);
+    //glEnable(GL_LIGHT0);
+    //glEnable(GL_LIGHT1);
+    //glEnable(GL_DEPTH_TEST);
 }
 
 //****************************************************
@@ -318,6 +318,7 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
 	drawTriangle(a, nab, nca, patchNum, recur + 1); // ok
 	drawTriangle(b, nbc, nab, patchNum, recur + 1); // ok
 	drawTriangle(c, nca, nbc, patchNum, recur + 1); // ok
+	drawTriangle(nab, nbc, nca, patchNum, recur + 1);
     } else if (eab && ebc) {
 	nab.u = ab.u;
 	nab.v = ab.v;
