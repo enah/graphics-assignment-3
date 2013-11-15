@@ -25,7 +25,7 @@
 #include <IL/il.h>
 
 #define ANGLE 15.0
-#define MAX_RECUR 10
+#define MAX_RECUR 3
 
 using namespace std;
 
@@ -35,7 +35,7 @@ using namespace std;
 float limit;
 bool adaptive = false;
 int numPatches;
-bool lines = false;
+bool lines = true;
 GLfloat mat_specular[] = {21.0, 21.0, 21.0, 1.0};
 GLfloat mat_diffuse[] = {12.5, 12.5, 12.5, 0.5};
 GLfloat mat_ambient[] = {0.05, 0.05, 0.05, 1.0};
@@ -88,7 +88,9 @@ public:
 	glEnd();
 	return;
     }
-    
+    void print() {
+	printf(" %.2f %.2f %.2f %.2f %.2f ", x, y, z, u, v);
+    }
     float x, y, z, u, v;
 };
 
@@ -145,7 +147,7 @@ void initScene() {
   // Nothing to do here for this simple example.
     glLoadIdentity();
     glutInitDisplayMode(GLUT_DEPTH);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glShadeModel(GL_SMOOTH);
 
@@ -155,10 +157,10 @@ void initScene() {
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glEnable(GL_LIGHT1);
-    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_LIGHTING);
+    //glEnable(GL_LIGHT0);
+    //glEnable(GL_LIGHT1);
+    //glEnable(GL_DEPTH_TEST);
 }
 
 //****************************************************
@@ -268,6 +270,11 @@ void uniformTesselation() {
 }
 
 void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
+    // printf("triangle:");
+    // a.print();
+    // b.print();
+    // c.print();
+    // printf("\n");
     if (recur > MAX_RECUR) {
 	putNormal(a, b, c);
 	a.putVertex();
@@ -285,29 +292,68 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
     bool eab = ab.far(nab);
     bool ebc = bc.far(nbc);
     bool eca = ca.far(nca);
+    //printf("depth: %d split at:", recur);
+    // if (eab) {
+    // 	ab.print();
+    // 	printf("is far from");
+    // 	nab.print();
+    // } if (ebc) {
+    // 	bc.print();
+    // 	printf("is far from");
+    // 	nbc.print();
+    // } if (eca) {
+    // 	ca.print();
+    // 	printf("is far from");
+    // 	nca.print();
+    // }
+    //printf("\n");
     if (eab && ebc && eca) {
+	nab.u = ab.u;
+	nab.v = ab.v;
+	nbc.u = bc.u;
+	nbc.v = bc.v;
+	nca.u = ca.u;
+	nca.v = ca.v;
 	drawTriangle(a, nab, nca, patchNum, recur + 1); // ok
 	drawTriangle(b, nbc, nab, patchNum, recur + 1); // ok
 	drawTriangle(c, nca, nbc, patchNum, recur + 1); // ok
     } else if (eab && ebc) {
+	nab.u = ab.u;
+	nab.v = ab.v;
+	nbc.u = bc.u;
+	nbc.v = bc.v;	
 	drawTriangle(b, nbc, nab, patchNum, recur + 1);
 	drawTriangle(c, nab, nbc, patchNum, recur + 1);
 	drawTriangle(a, nab, c, patchNum, recur + 1); // need to change
     } else if (ebc && eca) {
+	nbc.u = bc.u;
+	nbc.v = bc.v;
+	nca.u = ca.u;
+	nca.v = ca.v;
 	drawTriangle(c, nca, nbc, patchNum, recur + 1);
 	drawTriangle(a, nbc, nca, patchNum, recur + 1);
 	drawTriangle(b, nbc, a, patchNum, recur + 1);
     } else if (eca && eab) {
+	nab.u = ab.u;
+	nab.v = ab.v;
+	nca.u = ca.u;
+	nca.v = ca.v;
 	drawTriangle(a, nab, nca, patchNum, recur + 1);
 	drawTriangle(b, nca, nab, patchNum, recur + 1);
 	drawTriangle(c, nca, b, patchNum, recur + 1);
     } else if (eab) {
+	nbc.u = bc.u;
+	nbc.v = bc.v;
 	drawTriangle(c, a, nab, patchNum, recur + 1);
 	drawTriangle(c, nab, b, patchNum, recur + 1);
     } else if (ebc) {
+	nbc.u = bc.u;
+	nbc.v = bc.v;
 	drawTriangle(a, b, nbc, patchNum, recur + 1);
 	drawTriangle(a, nbc, c, patchNum, recur + 1);
     } else if (eca) {
+	nca.u = ca.u;
+	nca.v = ca.v;
 	drawTriangle(b, a, nca, patchNum, recur + 1);
 	drawTriangle(b, nca, a, patchNum, recur + 1);
     } else {
