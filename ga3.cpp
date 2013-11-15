@@ -147,7 +147,7 @@ void initScene() {
 
   // Nothing to do here for this simple example.
     glLoadIdentity();
-    glutInitDisplayMode(GLUT_DEPTH);
+    //glutInitDisplayMode(GLUT_DEPTH);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glShadeModel(GL_SMOOTH);
@@ -565,7 +565,7 @@ int main(int argc, char *argv[]) {
     glutInit(&argc, argv);
     
     //This tells glut to use a double-buffered window with red, green, and blue channels
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     
     // Initalize theviewport size
     viewport.w = 400;
