@@ -35,8 +35,11 @@ using namespace std;
 float limit;
 bool adaptive = false;
 int numPatches;
-bool lines = true;
-
+bool lines = false;
+GLfloat mat_specular[] = {21.0, 21.0, 21.0, 1.0};
+GLfloat mat_diffuse[] = {12.5, 12.5, 12.5, 0.5};
+GLfloat mat_shininess[] = {20.0};
+GLfloat light_position[] = {-1.0, -1.0, -1.0, -1.0};
 
 // Classes
 
@@ -141,7 +144,18 @@ void initScene() {
   // Nothing to do here for this simple example.
     glLoadIdentity();
     glutInitDisplayMode(GLUT_DEPTH);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glShadeModel(GL_SMOOTH);
+
+    //glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
+    //glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse);
+    //glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_DEPTH_TEST);
 }
 
 //****************************************************
@@ -163,7 +177,7 @@ void myReshape(int w, int h) {
 void putNormal(Point a, Point b, Point c) {
     Point ab = a * -1.0 + b;
     Point ac = a * -1.0 + c;
-    glNormal3f(ab.y*ac.z - ab.z*ac.y, ab.z*ac.x-ab.x*ac.z, ab.x*ac.y-ab.y*ac.x);
+    glNormal3f(-ab.y*ac.z + ab.z*ac.y, -ab.z*ac.x+ab.x*ac.z, -ab.x*ac.y+ab.y*ac.x);
 }
 
 void interpolatePoints(Point* points, int patchNum, int numSteps) {
@@ -328,14 +342,14 @@ void adaptiveTessalation() {
 //***************************************************
 void myDisplay() {
 
-    glClear(GL_COLOR_BUFFER_BIT);				// clear the color buffer
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);				// clear the color buffer
 
     glMatrixMode(GL_MODELVIEW);			        // indicate we are specifying camera transformations
     //glLoadIdentity();				        // make sure transformation is "zero'd"
 
 
     // Start drawing
-    //glColor3f(1.0f, 0.5f, 0.0f);
+    glColor3f(1.0f, 1.0f, 1.0f);
 
   // Glbegin(Gl_LINE_STRIP);
   // glVertex3f(0.0f, 0.0f, 0.0f);
