@@ -158,10 +158,10 @@ void initScene() {
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 
-    //glEnable(GL_LIGHTING);
-    //glEnable(GL_LIGHT0);
-    //glEnable(GL_LIGHT1);
-    //glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHT1);
+    glEnable(GL_DEPTH_TEST);
 }
 
 //****************************************************
@@ -174,7 +174,7 @@ void myReshape(int w, int h) {
   glViewport (0,0,viewport.w,viewport.h);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(-4, 4, -4, 4, 4, -4);
+  glOrtho(-4, 4, -4, 4, -4, 4);
   //gluOrtho2D(0, viewport.w, 0, viewport.h);
 
 }
