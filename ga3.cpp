@@ -25,7 +25,7 @@
 #include <IL/il.h>
 
 #define ANGLE 15.0
-#define MAX_RECUR 3
+#define MAX_RECUR 10
 
 using namespace std;
 
@@ -38,7 +38,7 @@ int numPatches;
 bool lines = true;
 GLfloat mat_specular[] = {21.0, 21.0, 21.0, 1.0};
 GLfloat mat_diffuse[] = {12.5, 12.5, 12.5, 0.5};
-GLfloat mat_ambient[] = {0.05, 0.05, 0.05, 1.0};
+GLfloat mat_ambient[] = {0.5, 0.5, 0.5, 1.0};
 GLfloat mat_shininess[] = {20.0};
 GLfloat light_position[] = {0.0, -1.0, -1.0, -1.0};
 
@@ -157,10 +157,10 @@ void initScene() {
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient);
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 
-    //glEnable(GL_LIGHTING);
-    //glEnable(GL_LIGHT0);
-    //glEnable(GL_LIGHT1);
-    //glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHT1);
+    glEnable(GL_DEPTH_TEST);
 }
 
 //****************************************************
@@ -178,7 +178,7 @@ void myReshape(int w, int h) {
 
 }
 
-// counterclockwise from face up
+// clockwise from face up
 void putNormal(Point a, Point b, Point c) {
     Point ab = a * -1.0 + b;
     Point ac = a * -1.0 + c;
@@ -276,7 +276,7 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
     // c.print();
     // printf("\n");
     if (recur > MAX_RECUR) {
-	putNormal(a, b, c);
+	putNormal(c, b, a);
 	a.putVertex();
 	b.putVertex();
 	c.putVertex();
@@ -292,7 +292,7 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
     bool eab = ab.far(nab);
     bool ebc = bc.far(nbc);
     bool eca = ca.far(nca);
-    //printf("depth: %d split at:", recur);
+    // printf("depth: %d split at:", recur);
     // if (eab) {
     // 	ab.print();
     // 	printf("is far from");
@@ -306,7 +306,7 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
     // 	printf("is far from");
     // 	nca.print();
     // }
-    //printf("\n");
+    // printf("\n");
     if (eab && ebc && eca) {
 	nab.u = ab.u;
 	nab.v = ab.v;
@@ -354,10 +354,10 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
     } else if (eca) {
 	nca.u = ca.u;
 	nca.v = ca.v;
-	drawTriangle(b, a, nca, patchNum, recur + 1);
+	drawTriangle(b, c, nca, patchNum, recur + 1);
 	drawTriangle(b, nca, a, patchNum, recur + 1);
     } else {
-	putNormal(a, b, c);
+	putNormal(c, b, a);
 	a.putVertex();
 	b.putVertex();
 	c.putVertex();
