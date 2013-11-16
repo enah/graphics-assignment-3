@@ -156,7 +156,7 @@ public:
 	float nx = du.y*dv.z - du.z*dv.y;
 	float ny = du.z*dv.x - du.x*dv.z;
 	float nz = du.x*dv.y - du.y*dv.x;
-	normal = new Point(nx, ny, nz);
+	(*normal) = Point(nx, ny, nz);
 	//(*normal).print();
 	return result;
     }
@@ -285,8 +285,8 @@ void uniTesQuad() {
 	} else {
 	    for(int j = 0; j < numSteps - 1; j++) {
 		for(int i = 0; i < numSteps - 1; i++) {
-		    putNormal(points[j*numSteps+i], points[(j+1)*numSteps+i], points[j*numSteps+i+1]);
-		    //((normals[j*numSteps+i] + normals[(j+1)*numSteps+i] + normals[(j+1)*numSteps+i+1] + normals[j*numSteps+i+1])*0.25).putNormal();
+		    //putNormal(points[j*numSteps+i], points[(j+1)*numSteps+i], points[j*numSteps+i+1]);
+		    ((normals[j*numSteps+i] + normals[(j+1)*numSteps+i] + normals[(j+1)*numSteps+i+1] + normals[j*numSteps+i+1])*0.25).putNormal();
 		    points[j*numSteps+i].putVertex();
 		    points[(j+1)*numSteps+i].putVertex();
 		    points[(j+1)*numSteps+i+1].putVertex();
