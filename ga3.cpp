@@ -42,6 +42,9 @@ GLfloat mat_diffuse[] = {12.5, 12.5, 12.5, 0.5};
 GLfloat mat_ambient[] = {0.5, 0.5, 0.5, 1.0};
 GLfloat mat_shininess[] = {20.0};
 GLfloat light_position[] = {0.0, -1.0, -1.0, -1.0};
+float translate[] = {0.0, 0.0};
+float rotate[] = {0.0, 0.0};
+
 
 // Classes
 
@@ -81,6 +84,9 @@ public:
 	glVertex3f(x, y, z);
 	return;
     }
+    void putNormal() {
+	glNormal3f(x, y, z);
+    }
     void drawFrom(Point p) {
 	glBegin(GL_LINES);
 	p.putVertex();
@@ -95,6 +101,8 @@ public:
     float x, y, z, u, v;
 };
 
+Point junk;
+
 class Triangle {
 public:
     Triangle(Point A, Point B, Point C): a(A), b(B), c(C) {}
@@ -105,13 +113,14 @@ public:
 class Curve {
 public:
     Curve(Point p0, Point p1, Point p2, Point p3): pt0(p0), pt1(p1), pt2(p2), pt3(p3) {}
-    Point interpolate(float t) {
+    Point interpolate(float t, Point *derivative) {
 	Point a = pt0*(1.0-t) + pt1*t;
 	Point b = pt1*(1.0-t) + pt2*t;
 	Point c = pt2*(1.0-t) + pt3*t;
 	
 	Point d = a*(1.0-t) + b*t;
 	Point e = b*(1.0-t) + c*t;
+	(*derivative) = (e + d * -1.0) * 3.0;
 	return d*(1.0-t) + e*t;
     }
     Point pt0, pt1, pt2, pt3;
@@ -126,21 +135,30 @@ public:
 	return Curve(pts[u], pts[u+4], pts[u+8], pts[u+12]);
     }
     Curve interpolateU(float v) {
-	Point a = getCurveV(0).interpolate(v);
-	Point b = getCurveV(1).interpolate(v);
-	Point c = getCurveV(2).interpolate(v);
-	Point d = getCurveV(3).interpolate(v);
+	Point a = getCurveV(0).interpolate(v, &junk);
+	Point b = getCurveV(1).interpolate(v, &junk);
+	Point c = getCurveV(2).interpolate(v, &junk);
+	Point d = getCurveV(3).interpolate(v, &junk);
 	return Curve(a, b, c, d);
     }
     Curve interpolateV(float u) {
-	Point a = getCurveU(0).interpolate(u);
-	Point b = getCurveU(1).interpolate(u);
-	Point c = getCurveU(2).interpolate(u);
-	Point d = getCurveU(3).interpolate(u);
-	return Curve(a, b, d, d);
+	Point a = getCurveU(0).interpolate(u, &junk);
+	Point b = getCurveU(1).interpolate(u, &junk);
+	Point c = getCurveU(2).interpolate(u, &junk);
+	Point d = getCurveU(3).interpolate(u, &junk);
+	return Curve(a, b, c, d);
     }
-    Point interpolate(float u, float v) {
-	return interpolateU(v).interpolate(u);
+    Point interpolate(float u, float v, Point *normal) {
+	Point du;
+	Point dv;
+	Point result = interpolateU(v).interpolate(u, &du);
+	interpolateV(u).interpolate(v, &dv);
+	float nx = du.y*dv.z - du.z*dv.y;
+	float ny = du.z*dv.x - du.x*dv.z;
+	float nz = du.x*dv.y - du.y*dv.x;
+	normal = new Point(nx, ny, nz);
+	//(*normal).print();
+	return result;
     }
     Point pts[16];
 };
@@ -198,7 +216,7 @@ void putNormal(Point a, Point b, Point c) {
     Point ab = a * -1.0 + b;
     Point ac = a * -1.0 + c;
     float dot = ab.x*ac.x + ab.y*ac.y + ab.z*ac.z;
-    Point p = *(new Point());
+    Point p;
     float dis = p.distance(ab)*p.distance(ac);
     float angle = acos(dot/dis);
     float cx = ab.y*ac.z - ab.z*ac.y;
@@ -211,17 +229,22 @@ void putNormal(Point a, Point b, Point c) {
     }
 }
 
-void interpolatePoints(Point* points, int patchNum, int numSteps) {
+void interpolatePoints(Point* points, int patchNum, int numSteps, Point* normals) {
+    Point normal;
     for (int j = 0; j < numSteps - 1; j++) {
 	for (int i = 0; i < numSteps - 1; i++) {
-	    points[j*numSteps+i] = patches[patchNum]->interpolate(i*limit, j*limit);
+	    points[j*numSteps+i] = patches[patchNum]->interpolate(i*limit, j*limit, &normal);
+	    normals[j*numSteps+i] = normal;
 	}
-	points[(j+1)*numSteps-1] = patches[patchNum]->interpolate(1.0, j*limit);
+	points[(j+1)*numSteps-1] = patches[patchNum]->interpolate(1.0, j*limit, &normal);
+	normals[(j+1)*numSteps-1] = normal;
     }
     for (int i = 0; i < numSteps - 1; i++) {
-	points[(numSteps-1)*numSteps+i] = patches[patchNum]->interpolate(i*limit, 1.0);
+	points[(numSteps-1)*numSteps+i] = patches[patchNum]->interpolate(i*limit, 1.0, &normal);
+	normals[(numSteps-1)*numSteps+i] = normal;
     }
-    points[numSteps*numSteps-1] = patches[patchNum]->interpolate(1.0, 1.0);
+    points[numSteps*numSteps-1] = patches[patchNum]->interpolate(1.0, 1.0, &normal);
+    normals[numSteps*numSteps-1] = normal;
 }
 
 void printPoints(Point *points, int numSteps) {
@@ -240,61 +263,81 @@ void uniTesQuad() {
     int numSteps = (int)(1.0/ limit) + 2;
     for (int x = 0; x < numPatches; x++) {
 	Point* points = new Point[numSteps*numSteps];
-	interpolatePoints(points, x, numSteps);
+	Point* normals = new Point[numSteps*numSteps];
+	interpolatePoints(points, x, numSteps, normals);
 	//printPoints(points, numSteps);
-	for(int j = 0; j < numSteps - 1; j++) {
-	    for(int i = 0; i < numSteps - 1; i++) {
-		putNormal(points[j*numSteps+i], points[(j+1)*numSteps+i], points[j*numSteps+i+1]);
-		points[j*numSteps+i].putVertex();
-		points[(j+1)*numSteps+i].putVertex();
-		points[(j+1)*numSteps+i+1].putVertex();
-		points[j*numSteps+i+1].putVertex();
+	if (false) { //smooth
+	    for(int j = 0; j < numSteps - 1; j++) {
+		for(int i = 0; i < numSteps - 1; i++) {
+		    //putNormal(points[j*numSteps+i], points[(j+1)*numSteps+i], points[j*numSteps+i+1]);
+		    //((normals[j*numSteps+i] + normals[(j+1)*numSteps+i] + normals[(j+1)*numSteps+i+1] + normals[j*numsteps+i+1])*0.25).putNormal();
+		    normals[j*numSteps+i].putNormal();
+		    points[j*numSteps+i].putVertex();
+		    normals[(j+1)*numSteps+i].putNormal();
+		    points[(j+1)*numSteps+i].putVertex();
+		    normals[(j+1)*numSteps+i+1].putNormal();
+		    points[(j+1)*numSteps+i+1].putVertex();
+		    normals[j*numSteps+i+1].putNormal();
+		    points[j*numSteps+i+1].putVertex();
 
+		}
+	    }
+	} else {
+	    for(int j = 0; j < numSteps - 1; j++) {
+		for(int i = 0; i < numSteps - 1; i++) {
+		    putNormal(points[j*numSteps+i], points[(j+1)*numSteps+i], points[j*numSteps+i+1]);
+		    //((normals[j*numSteps+i] + normals[(j+1)*numSteps+i] + normals[(j+1)*numSteps+i+1] + normals[j*numSteps+i+1])*0.25).putNormal();
+		    points[j*numSteps+i].putVertex();
+		    points[(j+1)*numSteps+i].putVertex();
+		    points[(j+1)*numSteps+i+1].putVertex();
+		    points[j*numSteps+i+1].putVertex();
+
+		}
 	    }
 	}
     }
     glEnd();
 }
 
-void uniformTesselation() {
-    int numSteps = (int)(1.0 / limit) + 1;
-    for (int i = 0; i < numPatches; i++) {
-	glColor3f(((float)i)/numPatches, 1.0 - ((float)i)/numPatches, 0.0f);
-	//printf("%d", numSteps);
-	Point* curr = new Point[numSteps + 1];
-	Point* prev = new Point[numSteps + 1];
-	Point* temp;
-	prev[0] = patches[i]->pts[0];
-	for (int u = 1; u < numSteps; u++) {
-	    prev[u] = patches[i]->interpolate(u*limit,0.0);
-	    prev[u].drawFrom(prev[u-1]);
-	}
-	prev[numSteps] = patches[i]->interpolate(1.0, 0.0);
-	prev[numSteps].drawFrom(prev[numSteps-1]);
-	for (int v = 1; v < numSteps; v++) {
-	    curr[0] = patches[i]->interpolate(0.0, v*limit);
-	    curr[0].drawFrom(prev[0]);
-	    for (int u = 1; u < numSteps; u++) {
-		curr[u] = patches[i]->interpolate(u*limit, v*limit);
-		curr[u].drawFrom(curr[u-1]);
-		curr[u].drawFrom(prev[u]);
-	    }
-	    curr[numSteps] = patches[i]->interpolate(1.0, v*limit);
-	    curr[numSteps].drawFrom(curr[numSteps-1]);
-	    curr[numSteps].drawFrom(prev[numSteps]);
-	    temp = prev;
-	    prev = curr;
-	    curr = temp;
-	}
-	curr[0] = patches[i]->interpolate(0.0, 1.0);
-	curr[0].drawFrom(prev[0]);
-	for (int u = 1; u < numSteps; u++) {
-	    curr[u] = patches[i]->interpolate(u*limit, 1.0);
-	    curr[u].drawFrom(curr[u-1]);
-	    curr[u].drawFrom(prev[u]);
-	}
-    }
-}
+// void uniformTesselation() {
+//     int numSteps = (int)(1.0 / limit) + 1;
+//     for (int i = 0; i < numPatches; i++) {
+// 	glColor3f(((float)i)/numPatches, 1.0 - ((float)i)/numPatches, 0.0f);
+// 	//printf("%d", numSteps);
+// 	Point* curr = new Point[numSteps + 1];
+// 	Point* prev = new Point[numSteps + 1];
+// 	Point* temp;
+// 	prev[0] = patches[i]->pts[0];
+// 	for (int u = 1; u < numSteps; u++) {
+// 	    prev[u] = patches[i]->interpolate(u*limit,0.0);
+// 	    prev[u].drawFrom(prev[u-1]);
+// 	}
+// 	prev[numSteps] = patches[i]->interpolate(1.0, 0.0);
+// 	prev[numSteps].drawFrom(prev[numSteps-1]);
+// 	for (int v = 1; v < numSteps; v++) {
+// 	    curr[0] = patches[i]->interpolate(0.0, v*limit);
+// 	    curr[0].drawFrom(prev[0]);
+// 	    for (int u = 1; u < numSteps; u++) {
+// 		curr[u] = patches[i]->interpolate(u*limit, v*limit);
+// 		curr[u].drawFrom(curr[u-1]);
+// 		curr[u].drawFrom(prev[u]);
+// 	    }
+// 	    curr[numSteps] = patches[i]->interpolate(1.0, v*limit);
+// 	    curr[numSteps].drawFrom(curr[numSteps-1]);
+// 	    curr[numSteps].drawFrom(prev[numSteps]);
+// 	    temp = prev;
+// 	    prev = curr;
+// 	    curr = temp;
+// 	}
+// 	curr[0] = patches[i]->interpolate(0.0, 1.0);
+// 	curr[0].drawFrom(prev[0]);
+// 	for (int u = 1; u < numSteps; u++) {
+// 	    curr[u] = patches[i]->interpolate(u*limit, 1.0);
+// 	    curr[u].drawFrom(curr[u-1]);
+// 	    curr[u].drawFrom(prev[u]);
+// 	}
+//     }
+// }
 
 void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
     // printf("triangle:");
@@ -310,11 +353,11 @@ void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
 	return;
     }
     Point ab = a.midpoint(b);
-    Point nab = patches[patchNum]->interpolate(ab.u, ab.v);
+    Point nab = patches[patchNum]->interpolate(ab.u, ab.v, &junk);
     Point bc = b.midpoint(c);
-    Point nbc = patches[patchNum]->interpolate(bc.u, bc.v);
+    Point nbc = patches[patchNum]->interpolate(bc.u, bc.v, &junk);
     Point ca = c.midpoint(a);
-    Point nca = patches[patchNum]->interpolate(ca.u, ca.v);
+    Point nca = patches[patchNum]->interpolate(ca.u, ca.v, &junk);
     // the latter should probably go in the close function
     bool eab = ab.far(nab);
     bool ebc = bc.far(nbc);
@@ -435,23 +478,20 @@ void myDisplay() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);				// clear the color buffer
 
     glMatrixMode(GL_MODELVIEW);			        // indicate we are specifying camera transformations
-    //glLoadIdentity();				        // make sure transformation is "zero'd"
-
-
+    glLoadIdentity();				        // make sure transformation is "zero'd"
+    glPushMatrix();
+    glTranslatef(translate[0],translate[1],0);
+    glRotatef(rotate[0], 1, 0, 0);
+    glRotatef(rotate[1], 0, 1, 0);
     // Start drawing
     glColor3f(1.0f, 1.0f, 1.0f);
-
-  // Glbegin(Gl_LINE_STRIP);
-  // glVertex3f(0.0f, 0.0f, 0.0f);
-  // glVertex3f(0.0f, 0.5f, 0.0f);
-  // glVertex3f(0.5f, 0.0f, 0.0f);
-  // glEnd();  
   
     if (adaptive) {
 	adaptiveTessalation();
     } else {
 	uniTesQuad();
     }
+    glPopMatrix();
     glFlush();
     glutSwapBuffers();					// swap buffers (we earlier set double buffer)
     //printf("hello world");
@@ -461,16 +501,20 @@ void myDirectionalKeys(int key, int mouseX, int mouseY) {
     if (glutGetModifiers() == GLUT_ACTIVE_SHIFT) {
 	switch (key) {
 	case GLUT_KEY_RIGHT:
-	    glTranslatef(1.0f, 0.0f, 1.0f);
+	    //glTranslatef(1.0f, 0.0f, 1.0f);
+	    translate[0] += 0.1;
 	    break;
 	case GLUT_KEY_LEFT:
-	    glTranslatef(-1.0f, 0.0f, 1.0f);
+	    //glTranslatef(-1.0f, 0.0f, 1.0f);
+	    translate[0] -= 0.1;
 	    break;
 	case GLUT_KEY_UP:
-	    glTranslatef(0.0f, 1.0f, 0.0f);
+	    //glTranslatef(0.0f, 1.0f, 0.0f);
+	    translate[1] += 0.1;
 	    break;
 	case GLUT_KEY_DOWN:
-	    glTranslatef(0.0f, -1.0f, 0.0f);
+	    //glTranslatef(0.0f, -1.0f, 0.0f);
+	    translate[1] -= 0.1;
 	    break;
 	    // translate object with shift+arrow keys
 	default:
@@ -479,16 +523,20 @@ void myDirectionalKeys(int key, int mouseX, int mouseY) {
     } else {
 	switch (key) {
 	case GLUT_KEY_RIGHT:
-	    glRotatef(ANGLE, 0.0f, 0.0f, 1.0f);
+	    //glRotatef(ANGLE, 0.0f, 0.0f, 1.0f);
+	    rotate[1] += 10.0;
 	    break;
 	case GLUT_KEY_LEFT:
-	    glRotatef(-ANGLE, 0.0f, 0.0f, 1.0f);
+	    //glRotatef(-ANGLE, 0.0f, 0.0f, 1.0f);
+	    rotate[1] -= 10.0;
 	    break;
 	case GLUT_KEY_UP:
-	    glRotatef(ANGLE, 1.0f, 0.0f, 0.0f);
+	    //glRotatef(ANGLE, 1.0f, 0.0f, 0.0f);
+	    rotate[0] -= 10.0;
 	    break;
 	case GLUT_KEY_DOWN:
-	    glRotatef(-ANGLE, 1.0f, 0.0f, 0.0f);
+	    //glRotatef(-ANGLE, 1.0f, 0.0f, 0.0f);
+	    rotate[0] += 10.0;
 	    break;
 	    // translate object with shift+arrow keys
 	default:
