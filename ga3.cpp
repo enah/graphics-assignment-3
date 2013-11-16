@@ -37,9 +37,9 @@ bool adaptive = false;
 int numPatches;
 bool lines = true;
 bool smooth = true;
-GLfloat mat_specular[] = {21.0, 21.0, 21.0, 1.0};
-GLfloat mat_diffuse[] = {12.5, 12.5, 12.5, 0.5};
-GLfloat mat_ambient[] = {0.5, 0.5, 0.5, 1.0};
+GLfloat mat_specular[] = {0.25, 0.25, 0.25, 1.0};
+GLfloat mat_diffuse[] = {0.25, 0.25, 0.25, 1.5};
+GLfloat mat_ambient[] = {0.25, 0.25, 0.25, 1.0};
 GLfloat mat_shininess[] = {20.0};
 GLfloat light_position[] = {0.0, -1.0, -1.0, -1.0};
 float translate[] = {0.0, 0.0};
@@ -153,10 +153,18 @@ public:
 	Point dv;
 	Point result = interpolateU(v).interpolate(u, &du);
 	interpolateV(u).interpolate(v, &dv);
+	float dot = du.x*dv.x + du.y*dv.y + du.z*dv.z;
+	Point p;
+	float dis = p.distance(du)*p.distance(dv);
+	float angle = acos(dot/dis);
 	float nx = du.y*dv.z - du.z*dv.y;
 	float ny = du.z*dv.x - du.x*dv.z;
 	float nz = du.x*dv.y - du.y*dv.x;
-	(*normal) = Point(nx, ny, nz);
+	if (angle > 90) {
+	    (*normal) = Point(nx, ny, nz);
+	} else {
+	    (*normal) = Point(-nx, -ny, -nz);
+	}
 	//(*normal).print();
 	return result;
     }
@@ -266,7 +274,7 @@ void uniTesQuad() {
 	Point* normals = new Point[numSteps*numSteps];
 	interpolatePoints(points, x, numSteps, normals);
 	//printPoints(points, numSteps);
-	if (false) { //smooth
+	if (smooth) { //smooth
 	    for(int j = 0; j < numSteps - 1; j++) {
 		for(int i = 0; i < numSteps - 1; i++) {
 		    //putNormal(points[j*numSteps+i], points[(j+1)*numSteps+i], points[j*numSteps+i+1]);
