@@ -339,6 +339,13 @@ void uniTesQuad() {
 //     }
 // }
 
+void triangleIter(Triangle first, Triangle second, int patchNum) {
+    bool isGood = false;
+    while (!isGood) {
+
+    }
+}
+
 void drawTriangle(Point a, Point b, Point c, int patchNum, int recur) {
     // printf("triangle:");
     // a.print();
